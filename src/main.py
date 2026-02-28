@@ -1,4 +1,6 @@
-import sys, os
+import sys
+import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import FastAPI
@@ -11,8 +13,8 @@ from src.database import engine, Base
 from src.models import User, Product, Order, OrderItem, Inventory  # noqa – registers models
 from src.web_app import flask_app
 
-# ─── Create all tables on startup (fault-tolerant) ───────────────────────────
 import logging
+
 _log = logging.getLogger("inventory")
 try:
     Base.metadata.create_all(bind=engine)

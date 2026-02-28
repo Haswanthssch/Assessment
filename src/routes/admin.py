@@ -17,7 +17,7 @@ def get_dashboard_stats(
     _: User = Depends(get_current_admin),
 ):
     total_users = db.query(func.count(User.id)).filter(User.role == "user").scalar()
-    total_products = db.query(func.count(Product.id)).filter(Product.is_active == True).scalar()
+    total_products = db.query(func.count(Product.id)).filter(Product.is_active).scalar()
     total_orders = db.query(func.count(Order.id)).scalar()
     total_revenue = db.query(func.sum(Order.total_amount)).filter(
         Order.status.in_(["confirmed", "shipped", "delivered"])

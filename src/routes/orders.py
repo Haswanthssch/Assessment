@@ -5,8 +5,7 @@ from src.database import get_db
 from src.models.order import Order
 from src.models.order_item import OrderItem
 from src.models.inventory import Inventory
-from src.models.product import Product
-from src.schemas.order_schema import OrderCreate, OrderResponse, OrderItemResponse, OrderStatusUpdate
+from src.schemas.order_schema import OrderCreate, OrderResponse, OrderStatusUpdate
 from src.dependencies import get_current_user, get_current_admin
 from src.models.user import User
 from src.services.log_service import log_order_status, log_user_activity

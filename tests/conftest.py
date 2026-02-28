@@ -6,21 +6,20 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from unittest.mock import MagicMock, patch
 
 # ─── Use SQLite for tests (no PostgreSQL needed locally) ────────────────────
 TEST_DB_URL = "sqlite:///./test.db"
 
 # Patch env before any app imports
-import os
+import os  # noqa: E402
 os.environ["DATABASE_URL"] = TEST_DB_URL
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["FLASK_SECRET_KEY"] = "test-flask-secret"
 os.environ["MONGODB_URI"] = "mongodb://localhost:27017"
 os.environ["MONGODB_DB"] = "test_logs"
 
-from src.database import Base, get_db
-from src.main import api  # FastAPI app
+from src.database import Base, get_db  # noqa: E402
+from src.main import api  # FastAPI app  # noqa: E402
 
 
 @pytest.fixture(scope="session")

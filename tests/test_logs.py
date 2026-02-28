@@ -1,5 +1,5 @@
 """Tests for MongoDB activity log endpoints."""
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 @patch("src.services.log_service.activity_logs_col")

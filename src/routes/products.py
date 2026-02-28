@@ -5,7 +5,7 @@ from src.database import get_db
 from src.models.product import Product
 from src.models.inventory import Inventory
 from src.schemas.product_schema import ProductCreate, ProductUpdate, ProductResponse
-from src.dependencies import get_current_user, get_current_admin
+from src.dependencies import get_current_admin
 from src.models.user import User
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -18,7 +18,7 @@ def list_products(
     category: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    q = db.query(Product).filter(Product.is_active == True)
+    q = db.query(Product).filter(Product.is_active)
     if category:
         q = q.filter(Product.category == category)
     return q.offset(skip).limit(limit).all()
@@ -26,7 +26,7 @@ def list_products(
 
 @router.get("/{product_id}", response_model=ProductResponse)
 def get_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id, Product.is_active == True).first()
+    product = db.query(Product).filter(Product.id == product_id, Product.is_active).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
