@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  # ─── MySQL ──────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: inventory_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: inventory_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inventory_net
+
+  # ─── MongoDB ─────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:latest
+    container_name: inventory_mongodb
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - inventory_net
+
+  # ─── Backend (Flask + FastAPI) ───────────────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: inventory_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: mysql+pymysql://admin:admin@mysql:3306/inventory_db
+      MONGODB_URI: mongodb://mongodb:27017/
+      MONGODB_DB: activity_logs
+      SECRET_KEY: inventory-super-secret-key-2024
+      FLASK_SECRET_KEY: flask-inventory-secret-2024
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: "1440"
+      PYTHONPATH: /app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ../static:/app/static
+      - ../templates:/app/templates
+    networks:
+      - inventory_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  mysql_data:
+    driver: local
+  mongodb_data:
+    driver: local
+
+networks:
+  inventory_net:
+    driver: bridge

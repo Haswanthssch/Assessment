@@ -1,0 +1,163 @@
+/* ─── User Storefront CSS ────────────────────────────────────────────────────
+   Clean e-commerce aesthetic with vibrant accents
+──────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --surface: #f8fafc;
+    --radius: 14px;
+}
+
+body.user-body {
+    font-family: 'Inter', sans-serif;
+    background: var(--surface);
+    color: #1e293b;
+    margin: 0;
+}
+
+/* ─── Navbar ───────────────────────────────────────────────────────────────── */
+.user-navbar {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    padding: 14px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
+}
+
+.user-navbar .navbar-brand {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #fff !important;
+}
+
+.user-navbar .nav-link {
+    color: rgba(255, 255, 255, .8) !important;
+    font-weight: 500;
+}
+
+.user-navbar .nav-link.active,
+.user-navbar .nav-link:hover {
+    color: #fff !important;
+}
+
+.main-content {
+    min-height: calc(100vh - 70px);
+}
+
+/* ─── Hero Banner ──────────────────────────────────────────────────────────── */
+.products-hero {
+    background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 50%, #06b6d4 100%);
+    padding: 60px 40px !important;
+    box-shadow: 0 8px 40px rgba(99, 102, 241, .3);
+}
+
+.search-bar {
+    max-width: 500px;
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+.search-bar .form-control {
+    padding: 14px 20px;
+    font-size: .95rem;
+}
+
+.search-bar .input-group-text {
+    background: #fff;
+    color: var(--primary);
+    padding: 0 18px;
+}
+
+/* ─── Category Pills ───────────────────────────────────────────────────────── */
+.active-cat {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* ─── Product Card ─────────────────────────────────────────────────────────── */
+.product-card {
+    border-radius: var(--radius) !important;
+    transition: transform .25s ease, box-shadow .25s ease;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .1) !important;
+}
+
+.product-img-wrap {
+    position: relative;
+    overflow: hidden;
+    height: 200px;
+    background: #f1f5f9;
+}
+
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+}
+
+.product-card:hover .product-img {
+    transform: scale(1.07);
+}
+
+.product-category-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(99, 102, 241, .9);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ─── Cart Badge ───────────────────────────────────────────────────────────── */
+.cart-badge {
+    font-size: .65rem;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+}
+
+/* ─── Login Card ───────────────────────────────────────────────────────────── */
+.login-wrap {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-card {
+    border-radius: 20px !important;
+}
+
+.user-logo {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: #fff;
+    margin: 0 auto;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, .4);
+}
+
+/* ─── Nav Pill Tabs ────────────────────────────────────────────────────────── */
+.nav-pills .nav-link.active {
+    background: var(--primary) !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, .3);
+}

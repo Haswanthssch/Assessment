@@ -1,0 +1,121 @@
+{% extends "base_admin.html" %}
+{% block title %}Orders{% endblock %}
+{% block page_title %}Order Management{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-4 px-4">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-cart-check-fill me-2 text-warning"></i>All Orders</h6>
+    </div>
+    <div class="card-body px-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTable">
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="spinner-border text-warning"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-semibold">Order Details</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetail"></div>
+            <div class="modal-footer border-0">
+                <input type="hidden" id="statusOrderId" />
+                <select class="form-select w-auto" id="statusSelect">
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="btn btn-primary" onclick="updateStatus()">Update Status</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const token = localStorage.getItem('adminToken');
+    const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+    const statusColors = { pending: 'warning', confirmed: 'info', shipped: 'primary', delivered: 'success', cancelled: 'danger' };
+
+    async function loadOrders() {
+        const res = await fetch('/api/v1/orders/?limit=100', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) { window.location.href = '/admin/login'; return; }
+        const orders = await res.json();
+        const tb = document.getElementById('ordersTable');
+        if (!orders.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No orders yet.</td></tr>'; return; }
+        tb.innerHTML = orders.map(o => `
+    <tr>
+      <td><span class="badge bg-secondary">#${o.id}</span></td>
+      <td class="fw-semibold">${o.username || '–'}</td>
+      <td>${o.items.length} item(s)</td>
+      <td class="fw-semibold text-success">₹${o.total_amount.toFixed(2)}</td>
+      <td><span class="badge bg-${statusColors[o.status] || 'secondary'} text-capitalize">${o.status}</span></td>
+      <td class="text-muted small">${o.created_at ? new Date(o.created_at).toLocaleString('en-IN') : '–'}</td>
+      <td><button class="btn btn-sm btn-outline-primary" onclick="viewOrder(${o.id},'${o.status}')">
+        <i class="bi bi-eye"></i></button></td>
+    </tr>`).join('');
+    }
+
+    async function viewOrder(id, currentStatus) {
+        document.getElementById('statusOrderId').value = id;
+        document.getElementById('statusSelect').value = currentStatus;
+        document.getElementById('orderDetail').innerHTML = '<div class="text-center py-3"><div class="spinner-border"></div></div>';
+        modal.show();
+        const res = await fetch(`/api/v1/orders/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const o = await res.json();
+        document.getElementById('orderDetail').innerHTML = `
+    <div class="row mb-3">
+      <div class="col"><strong>Order #${o.id}</strong></div>
+      <div class="col text-end text-muted small">${new Date(o.created_at).toLocaleString('en-IN')}</div>
+    </div>
+    <p><strong>Customer:</strong> ${o.username || o.user_id} &nbsp; <strong>Shipping:</strong> ${o.shipping_address || 'N/A'}</p>
+    <table class="table table-sm table-bordered mb-0">
+      <thead class="table-light"><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
+      <tbody>${o.items.map(i => `<tr>
+        <td>${i.product_name || i.product_id}</td><td>${i.quantity}</td>
+        <td>₹${i.unit_price.toFixed(2)}</td><td>₹${i.subtotal.toFixed(2)}</td>
+      </tr>`).join('')}</tbody>
+      <tfoot><tr class="table-light"><td colspan="3" class="text-end fw-bold">Total</td>
+        <td class="fw-bold text-success">₹${o.total_amount.toFixed(2)}</td></tr></tfoot>
+    </table>`;
+    }
+
+    async function updateStatus() {
+        const id = document.getElementById('statusOrderId').value;
+        const status = document.getElementById('statusSelect').value;
+        const res = await fetch(`/api/v1/orders/${id}/status`, {
+            method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (res.ok) { modal.hide(); loadOrders(); } else alert('Update failed');
+    }
+
+    loadOrders();
+</script>
+{% endblock %}

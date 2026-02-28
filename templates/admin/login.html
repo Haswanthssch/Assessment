@@ -1,0 +1,76 @@
+{% extends "base_admin.html" %}
+{% block title %}Admin Login{% endblock %}
+{% block content %}
+<div class="admin-login-wrap">
+    <div class="login-card card shadow-lg border-0">
+        <div class="card-body p-5">
+            <div class="text-center mb-4">
+                <div class="login-logo mb-3"><i class="bi bi-box-seam-fill"></i></div>
+                <h4 class="fw-bold text-dark">InventoryOS Admin</h4>
+                <p class="text-muted small">Sign in to manage your system</p>
+            </div>
+            <div id="alertBox" class="alert d-none" role="alert"></div>
+            <form id="loginForm" novalidate>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" placeholder="admin@admin.com" required />
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" placeholder="••••••••" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 btn-lg fw-semibold" id="loginBtn">
+                    <span id="btnText">Sign In</span>
+                    <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                </button>
+            </form>
+            <p class="text-center text-muted small mt-4 mb-0">
+                Default: <code>admin@admin.com</code> / <code>admin123</code>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        const spinner = document.getElementById('btnSpinner');
+        const alert = document.getElementById('alertBox');
+
+        btn.disabled = true; spinner.classList.remove('d-none');
+        alert.className = 'alert d-none';
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const res = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Login failed');
+            if (data.user.role !== 'admin') throw new Error('Access denied. Admin account required.');
+
+            localStorage.setItem('adminToken', data.access_token);
+            localStorage.setItem('adminName', data.user.username);
+            localStorage.setItem('adminRole', data.user.role);
+            window.location.href = '/admin/dashboard';
+        } catch (err) {
+            alert.className = 'alert alert-danger';
+            alert.textContent = err.message;
+        } finally {
+            btn.disabled = false; spinner.classList.add('d-none');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base_admin.html" %}
+{% block title %}Users{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-4 px-4">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>All Users</h6>
+    </div>
+    <div class="card-body px-4">
+        <div id="alertBox" class="alert d-none mb-3"></div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable">
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-semibold">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId" />
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input class="form-control" id="editUsername" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" id="editEmail" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="editActive">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="saveUser()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const token = localStorage.getItem('adminToken');
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+
+    async function loadUsers() {
+        const res = await fetch('/api/v1/users/', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) { window.location.href = '/admin/login'; return; }
+        const users = await res.json();
+        const tb = document.getElementById('usersTable');
+        if (!users.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>'; return; }
+        tb.innerHTML = users.map(u => `
+    <tr>
+      <td><span class="badge bg-secondary">${u.id}</span></td>
+      <td class="fw-semibold">${u.username}</td>
+      <td>${u.email}</td>
+      <td><span class="badge ${u.role === 'admin' ? 'bg-danger' : 'bg-primary'} text-capitalize">${u.role}</span></td>
+      <td><span class="badge ${u.is_active ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td class="text-muted small">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '–'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="openEdit(${JSON.stringify(u).replace(/"/g, '&quot;')})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id})"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`).join('');
+    }
+
+    function openEdit(u) {
+        document.getElementById('editId').value = u.id;
+        document.getElementById('editUsername').value = u.username;
+        document.getElementById('editEmail').value = u.email;
+        document.getElementById('editActive').value = u.is_active.toString();
+        modal.show();
+    }
+
+    async function saveUser() {
+        const id = document.getElementById('editId').value;
+        const res = await fetch(`/api/v1/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('editUsername').value,
+                email: document.getElementById('editEmail').value,
+                is_active: document.getElementById('editActive').value === 'true'
+            })
+        });
+        if (res.ok) { modal.hide(); loadUsers(); } else alert('Update failed');
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Delete this user?')) return;
+        const res = await fetch(`/api/v1/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) loadUsers(); else alert('Delete failed');
+    }
+
+    loadUsers();
+</script>
+{% endblock %}

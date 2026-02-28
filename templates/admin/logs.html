@@ -1,0 +1,114 @@
+{% extends "base_admin.html" %}
+{% block title %}Activity Logs{% endblock %}
+{% block page_title %}Activity Logs{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body px-4 py-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">From Date</label>
+                <input type="date" class="form-control" id="dateFrom" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">To Date</label>
+                <input type="date" class="form-control" id="dateTo" />
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button class="btn btn-primary flex-grow-1" onclick="loadLogs()">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+                <button class="btn btn-outline-secondary" onclick="clearFilter()">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-activity me-2 text-primary"></i>User Activity
+                    <span class="badge bg-primary ms-2" id="logCount">0</span>
+                </h6>
+            </div>
+            <div class="card-body px-3" style="max-height:500px;overflow-y:auto;" id="activityLogs">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h6 class="fw-semibold mb-0"><i class="bi bi-clock-history me-2 text-warning"></i>Order History</h6>
+            </div>
+            <div class="card-body px-3" style="max-height:500px;overflow-y:auto;" id="orderHistory">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-warning"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const token = localStorage.getItem('adminToken');
+    const actionIcons = { login: 'box-arrow-in-right', register: 'person-plus', create_order: 'cart-plus' };
+
+    async function loadLogs() {
+        const from = document.getElementById('dateFrom').value;
+        const to = document.getElementById('dateTo').value;
+        let url = '/api/v1/logs/activity?limit=100';
+        if (from) url += `&date_from=${from}T00:00:00`;
+        if (to) url += `&date_to=${to}T23:59:59`;
+
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) { window.location.href = '/admin/login'; return; }
+        const data = await res.json();
+        document.getElementById('logCount').textContent = data.count;
+
+        const container = document.getElementById('activityLogs');
+        if (!data.logs.length) { container.innerHTML = '<p class="text-muted text-center py-3">No logs found.</p>'; return; }
+        container.innerHTML = data.logs.map(l => `
+    <div class="d-flex align-items-start gap-3 py-2 border-bottom">
+      <div class="log-icon bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+        <i class="bi bi-${actionIcons[l.action] || 'person'} small"></i>
+      </div>
+      <div class="flex-grow-1">
+        <div class="fw-semibold small">${l.username || 'Unknown'} 
+          <span class="badge bg-primary-subtle text-primary ms-1">${l.action}</span>
+        </div>
+        <div class="text-muted" style="font-size:0.75rem">${new Date(l.timestamp).toLocaleString('en-IN')}</div>
+      </div>
+    </div>`).join('');
+
+        // Load order history too
+        const hRes = await fetch('/api/v1/logs/order-history?limit=50', { headers: { 'Authorization': `Bearer ${token}` } });
+        const hData = await hRes.json();
+        const hContainer = document.getElementById('orderHistory');
+        if (!hData.history.length) { hContainer.innerHTML = '<p class="text-muted text-center py-3">No order history.</p>'; return; }
+        hContainer.innerHTML = hData.history.map(h => `
+    <div class="d-flex align-items-start gap-2 py-2 border-bottom">
+      <i class="bi bi-arrow-right-circle-fill text-warning mt-1"></i>
+      <div>
+        <div class="small fw-semibold">Order #${h.order_id}:
+          <span class="text-muted">${h.old_status || '–'}</span>
+          <i class="bi bi-arrow-right mx-1"></i>
+          <span class="badge bg-success">${h.new_status}</span>
+        </div>
+        <div class="text-muted" style="font-size:0.75rem">${new Date(h.timestamp).toLocaleString('en-IN')}</div>
+      </div>
+    </div>`).join('');
+    }
+
+    function clearFilter() {
+        document.getElementById('dateFrom').value = '';
+        document.getElementById('dateTo').value = '';
+        loadLogs();
+    }
+
+    loadLogs();
+</script>
+{% endblock %}

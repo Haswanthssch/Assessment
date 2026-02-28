@@ -1,0 +1,110 @@
+{% extends "base_admin.html" %}
+{% block title %}Inventory{% endblock %}
+{% block page_title %}Inventory Management{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0 pt-4 px-4">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-archive-fill me-2 text-info"></i>Stock Levels</h6>
+    </div>
+    <div class="card-body px-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>In Stock</th>
+                        <th>Reorder Level</th>
+                        <th>Alert</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="invTable">
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="spinner-border text-info"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Inventory Modal -->
+<div class="modal fade" id="invModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-semibold">Update Stock</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="invProductId" />
+                <div class="mb-3">
+                    <label class="form-label">Quantity in Stock</label>
+                    <input class="form-control" type="number" min="0" id="invQty" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Reorder Level</label>
+                    <input class="form-control" type="number" min="0" id="invReorder" />
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-info text-white" onclick="saveInventory()">Update Stock</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const token = localStorage.getItem('adminToken');
+    const modal = new bootstrap.Modal(document.getElementById('invModal'));
+
+    async function loadInventory() {
+        const res = await fetch('/api/v1/inventory/', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) { window.location.href = '/admin/login'; return; }
+        const items = await res.json();
+        const tb = document.getElementById('invTable');
+        if (!items.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No inventory records.</td></tr>'; return; }
+        tb.innerHTML = items.map(i => {
+            const low = i.quantity <= i.reorder_level;
+            return `<tr ${low ? 'class="table-warning"' : ''}>
+      <td><span class="badge bg-secondary">${i.product_id}</span></td>
+      <td class="fw-semibold">${i.product?.name || '–'}</td>
+      <td><span class="badge bg-info-subtle text-info">${i.product?.category || '–'}</span></td>
+      <td><span class="badge ${low ? 'bg-danger' : 'bg-success'} fs-6 px-3">${i.quantity}</span></td>
+      <td class="text-muted">${i.reorder_level}</td>
+      <td>${low ? '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Low Stock</span>' :
+                    '<span class="badge bg-success-subtle text-success">OK</span>'}</td>
+      <td><button class="btn btn-sm btn-outline-info" onclick="openEdit(${i.product_id},${i.quantity},${i.reorder_level})">
+        <i class="bi bi-pencil me-1"></i>Update</button></td>
+    </tr>`;
+        }).join('');
+    }
+
+    function openEdit(productId, qty, reorder) {
+        document.getElementById('invProductId').value = productId;
+        document.getElementById('invQty').value = qty;
+        document.getElementById('invReorder').value = reorder;
+        modal.show();
+    }
+
+    async function saveInventory() {
+        const pid = document.getElementById('invProductId').value;
+        const res = await fetch(`/api/v1/inventory/${pid}`, {
+            method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quantity: parseInt(document.getElementById('invQty').value),
+                reorder_level: parseInt(document.getElementById('invReorder').value)
+            })
+        });
+        if (res.ok) { modal.hide(); loadInventory(); } else alert('Update failed');
+    }
+
+    loadInventory();
+</script>
+{% endblock %}

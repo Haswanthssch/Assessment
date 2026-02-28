@@ -1,0 +1,133 @@
+{% extends "base_user.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<div class="login-wrap d-flex align-items-center justify-content-center min-vh-100">
+    <div class="login-card card border-0 shadow-lg" style="width:100%;max-width:440px">
+        <div class="card-body p-5">
+            <!-- Logo -->
+            <div class="text-center mb-4">
+                <div class="user-logo mb-3"><i class="bi bi-box-seam-fill"></i></div>
+                <h4 class="fw-bold">InventoryOS Store</h4>
+                <p class="text-muted small">Sign in to continue shopping</p>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-pills nav-justified mb-4 p-1 bg-light rounded-3" id="authTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-2" data-bs-toggle="tab" data-bs-target="#loginPanel"
+                        type="button">Sign In</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-2" data-bs-toggle="tab" data-bs-target="#registerPanel"
+                        type="button">Register</button>
+                </li>
+            </ul>
+
+            <div id="alertBox" class="alert d-none mb-3"></div>
+
+            <div class="tab-content">
+                <!-- LOGIN -->
+                <div class="tab-pane fade show active" id="loginPanel">
+                    <form id="loginForm" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="loginEmail" placeholder="you@example.com"
+                                    required />
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="loginPassword" placeholder="••••••••"
+                                    required />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 btn-lg fw-semibold">Sign In</button>
+                    </form>
+                </div>
+
+                <!-- REGISTER -->
+                <div class="tab-pane fade" id="registerPanel">
+                    <form id="registerForm" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="regUsername" placeholder="johndoe"
+                                    required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="regEmail" placeholder="you@example.com"
+                                    required />
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="regPassword" placeholder="Min. 6 chars"
+                                    required />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 btn-lg fw-semibold">Create Account</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <small class="text-muted">Admin? <a href="/admin/login">Admin Panel →</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function showAlert(msg, type = 'danger') {
+        const a = document.getElementById('alertBox');
+        a.className = `alert alert-${type}`;
+        a.textContent = msg;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await fetch('/api/v1/auth/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) { showAlert(data.detail || 'Login failed'); return; }
+        localStorage.setItem('userToken', data.access_token);
+        localStorage.setItem('userName', data.user.username);
+        localStorage.setItem('userId', data.user.id);
+        window.location.href = '/user/products';
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await fetch('/api/v1/auth/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('regUsername').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                role: 'user'
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) { showAlert(data.detail || 'Registration failed'); return; }
+        showAlert('Account created! Please sign in.', 'success');
+        document.querySelector('[data-bs-target="#loginPanel"]').click();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base_user.html" %}
+{% block title %}Shopping Cart{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <h2 class="fw-bold mb-0"><i class="bi bi-cart3 me-2 text-primary"></i>Your Cart</h2>
+        <span class="badge bg-primary rounded-pill fs-6" id="cartItemCount">0</span>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8" id="cartItemsPanel">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top:80px">
+                <div class="card-body p-4">
+                    <h5 class="fw-semibold mb-4">Order Summary</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal</span>
+                        <span class="fw-semibold" id="summarySubtotal">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Shipping</span>
+                        <span class="text-success fw-semibold">Free</span>
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="fw-bold fs-5">Total</span>
+                        <span class="fw-bold fs-5 text-primary" id="summaryTotal">₹0.00</span>
+                    </div>
+                    <a href="/user/checkout" class="btn btn-primary w-100 btn-lg fw-semibold">
+                        <i class="bi bi-lock me-2"></i>Proceed to Checkout
+                    </a>
+                    <a href="/user/products" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="bi bi-arrow-left me-1"></i>Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function renderCart() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const panel = document.getElementById('cartItemsPanel');
+        const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+
+        document.getElementById('cartItemCount').textContent = cart.reduce((s, i) => s + i.quantity, 0);
+        document.getElementById('summarySubtotal').textContent = '₹' + total.toFixed(2);
+        document.getElementById('summaryTotal').textContent = '₹' + total.toFixed(2);
+
+        if (!cart.length) {
+            panel.innerHTML = `<div class="text-center py-5">
+      <i class="bi bi-cart-x display-1 text-muted d-block mb-3"></i>
+      <h5 class="text-muted">Your cart is empty</h5>
+      <a href="/user/products" class="btn btn-primary mt-3">Start Shopping</a>
+    </div>`;
+            return;
+        }
+
+        panel.innerHTML = cart.map((item, idx) => `
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="row align-items-center g-3">
+          <div class="col-auto">
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:64px;height:64px">
+              <i class="bi bi-box fs-2 text-primary"></i>
+            </div>
+          </div>
+          <div class="col">
+            <h6 class="fw-semibold mb-1">${item.name}</h6>
+            <div class="text-primary fw-semibold">₹${item.price.toFixed(2)}</div>
+          </div>
+          <div class="col-auto">
+            <div class="input-group input-group-sm" style="width:110px">
+              <button class="btn btn-outline-secondary" onclick="changeQty(${idx}, -1)">-</button>
+              <input type="text" class="form-control text-center" value="${item.quantity}" readonly />
+              <button class="btn btn-outline-secondary" onclick="changeQty(${idx}, 1)">+</button>
+            </div>
+          </div>
+          <div class="col-auto fw-bold text-primary">₹${(item.price * item.quantity).toFixed(2)}</div>
+          <div class="col-auto">
+            <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${idx})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+    }
+
+    function changeQty(idx, delta) {
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        cart[idx].quantity = Math.max(1, cart[idx].quantity + delta);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCart();
+    }
+
+    function removeItem(idx) {
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        cart.splice(idx, 1);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCart();
+    }
+
+    renderCart();
+</script>
+{% endblock %}

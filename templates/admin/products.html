@@ -1,0 +1,160 @@
+{% extends "base_admin.html" %}
+{% block title %}Products{% endblock %}
+{% block page_title %}Product Management{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-4 px-4">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-box-fill me-2 text-success"></i>Products</h6>
+        <button class="btn btn-success btn-sm px-3" onclick="openCreate()">
+            <i class="bi bi-plus-lg me-1"></i>Add Product
+        </button>
+    </div>
+    <div class="card-body px-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTable">
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="spinner-border text-success"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-semibold" id="modalTitle">Add Product</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="productId" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Name *</label>
+                        <input class="form-control" id="pName" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Price (₹) *</label>
+                        <input class="form-control" id="pPrice" type="number" step="0.01" min="0.01" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" id="pCategory">
+                            <option value="">-- Select --</option>
+                            <option>Electronics</option>
+                            <option>Furniture</option>
+                            <option>Stationery</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="pDesc" rows="2"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Image URL</label>
+                        <input class="form-control" id="pImage" placeholder="https://..." />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-success" onclick="saveProduct()">Save Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const token = localStorage.getItem('adminToken');
+    const modal = new bootstrap.Modal(document.getElementById('productModal'));
+    let editMode = false;
+
+    async function loadProducts() {
+        const res = await fetch('/api/v1/products/?limit=100');
+        const products = await res.json();
+        const inv = await (await fetch('/api/v1/inventory/', { headers: { 'Authorization': `Bearer ${token}` } })).json();
+        const invMap = {};
+        inv.forEach(i => invMap[i.product_id] = i.quantity);
+
+        const tb = document.getElementById('productsTable');
+        if (!products.length) { tb.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No products.</td></tr>'; return; }
+        tb.innerHTML = products.map(p => `
+    <tr>
+      <td><span class="badge bg-secondary">${p.id}</span></td>
+      <td><img src="${p.image_url || 'https://placehold.co/50x50'}" class="rounded" style="width:45px;height:45px;object-fit:cover" /></td>
+      <td class="fw-semibold">${p.name}</td>
+      <td><span class="badge bg-info-subtle text-info">${p.category || '–'}</span></td>
+      <td class="text-success fw-semibold">₹${p.price.toFixed(2)}</td>
+      <td><span class="badge ${(invMap[p.id] || 0) <= 10 ? 'bg-danger' : 'bg-success'}-subtle text-${(invMap[p.id] || 0) <= 10 ? 'danger' : 'success'}">${invMap[p.id] || 0}</span></td>
+      <td><span class="badge ${p.is_active ? 'bg-success' : 'bg-secondary'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick='openEdit(${JSON.stringify(p)})'><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`).join('');
+    }
+
+    function openCreate() {
+        editMode = false;
+        document.getElementById('modalTitle').textContent = 'Add Product';
+        ['productId', 'pName', 'pPrice', 'pDesc', 'pImage'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('pCategory').value = '';
+        modal.show();
+    }
+
+    function openEdit(p) {
+        editMode = true;
+        document.getElementById('modalTitle').textContent = 'Edit Product';
+        document.getElementById('productId').value = p.id;
+        document.getElementById('pName').value = p.name;
+        document.getElementById('pPrice').value = p.price;
+        document.getElementById('pCategory').value = p.category || '';
+        document.getElementById('pDesc').value = p.description || '';
+        document.getElementById('pImage').value = p.image_url || '';
+        modal.show();
+    }
+
+    async function saveProduct() {
+        const body = {
+            name: document.getElementById('pName').value,
+            price: parseFloat(document.getElementById('pPrice').value),
+            category: document.getElementById('pCategory').value,
+            description: document.getElementById('pDesc').value,
+            image_url: document.getElementById('pImage').value,
+        };
+        const id = document.getElementById('productId').value;
+        const url = editMode ? `/api/v1/products/${id}` : '/api/v1/products/';
+        const method = editMode ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (res.ok) { modal.hide(); loadProducts(); } else { const e = await res.json(); alert(e.detail || 'Error'); }
+    }
+
+    async function deleteProduct(id) {
+        if (!confirm('Deactivate this product?')) return;
+        const res = await fetch(`/api/v1/products/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) loadProducts(); else alert('Failed');
+    }
+
+    loadProducts();
+</script>
+{% endblock %}

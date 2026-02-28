@@ -1,0 +1,177 @@
+/* ─── Admin CSS ──────────────────────────────────────────────────────────────
+   Dark sidebar, clean cards, premium admin feel
+──────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --sidebar-w: 240px;
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #94a3b8;
+  --sidebar-active: #6366f1;
+  --topbar-h: 65px;
+  --accent: #6366f1;
+  --surface: #f8fafc;
+  --radius: 14px;
+}
+
+body.admin-body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--surface);
+  color: #1e293b;
+  display: flex;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ─── Sidebar ──────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  padding: 0;
+  transition: width .2s ease;
+  overflow: hidden;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 24px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -.3px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.brand-icon {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-nav { padding: 16px 12px; }
+
+.sidebar-nav .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  color: var(--sidebar-text);
+  font-size: .875rem;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 2px;
+  transition: all .15s ease;
+}
+
+.sidebar-nav .nav-link:hover {
+  background: rgba(255,255,255,.06);
+  color: #fff;
+}
+
+.sidebar-nav .nav-link.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(99,102,241,.35);
+}
+
+.sidebar-nav .nav-link i { font-size: 1.05rem; flex-shrink: 0; }
+
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.btn-logout {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 11px 14px;
+  background: transparent; border: none;
+  color: var(--sidebar-text); border-radius: 10px;
+  font-size: .875rem; font-weight: 500; cursor: pointer;
+  transition: all .15s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-logout:hover { background: rgba(239,68,68,.15); color: #ef4444; }
+
+/* ─── Main Layout ──────────────────────────────────────────────────────────── */
+.admin-main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  height: var(--topbar-h);
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+
+.page-content { padding-top: 28px; }
+
+.avatar-pill {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-size: .8rem;
+  font-weight: 600;
+}
+
+/* ─── Stat Cards ───────────────────────────────────────────────────────────── */
+.stat-card { border-radius: var(--radius); transition: transform .2s ease, box-shadow .2s ease; }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,.1) !important; }
+
+.stat-icon {
+  width: 52px; height: 52px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-value { font-size: 1.75rem; font-weight: 700; line-height: 1; color: #1e293b; }
+.stat-label { font-size: .78rem; color: #64748b; margin-top: 4px; font-weight: 500; }
+
+/* ─── Cards ────────────────────────────────────────────────────────────────── */
+.card { border-radius: var(--radius) !important; }
+.card-header { background: transparent; }
+
+/* ─── Table ────────────────────────────────────────────────────────────────── */
+.table { font-size: .875rem; }
+.table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+
+/* ─── Admin Login ──────────────────────────────────────────────────────────── */
+.admin-login-wrap {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  padding: 20px;
+}
+
+.login-card { border-radius: 20px !important; width: 100%; max-width: 440px; }
+.login-logo {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.75rem; color: #fff;
+  margin: 0 auto;
+  box-shadow: 0 8px 25px rgba(99,102,241,.4);
+}
+
+/* ─── Log Icon ─────────────────────────────────────────────────────────────── */
+.log-icon { color: #6366f1; }

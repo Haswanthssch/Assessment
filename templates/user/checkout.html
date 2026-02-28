@@ -1,0 +1,148 @@
+{% extends "base_user.html" %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <h2 class="fw-bold mb-0"><i class="bi bi-credit-card me-2 text-primary"></i>Checkout</h2>
+    </div>
+
+    <div id="alertBox" class="alert d-none mb-4"></div>
+
+    <div class="row g-4">
+        <!-- Shipping form -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h6 class="fw-semibold"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Shipping Details</h6>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <form id="checkoutForm" novalidate>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Full Address *</label>
+                                <textarea class="form-control" id="address" rows="3"
+                                    placeholder="House No, Street, City, State – PIN" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="termsCheck" required />
+                                    <label class="form-check-label" for="termsCheck">
+                                        I agree to the <a href="#" class="text-primary">Terms of Service</a>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Payment (mock) -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h6 class="fw-semibold"><i class="bi bi-shield-lock-fill me-2 text-success"></i>Payment Method</h6>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="d-flex align-items-center gap-3 p-3 border rounded-3 bg-success-subtle mb-3">
+                        <i class="bi bi-cash-coin fs-3 text-success"></i>
+                        <div>
+                            <div class="fw-semibold">Cash on Delivery</div>
+                            <div class="text-muted small">Pay when your order arrives</div>
+                        </div>
+                        <div class="ms-auto"><i class="bi bi-check-circle-fill text-success fs-5"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order summary -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm sticky-top" style="top:80px">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h6 class="fw-semibold"><i class="bi bi-receipt me-2"></i>Order Summary</h6>
+                </div>
+                <div class="card-body px-4" id="orderSummary">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 px-4 pb-4">
+                    <button class="btn btn-primary w-100 btn-lg fw-semibold" onclick="placeOrder()" id="placeBtn">
+                        <i class="bi bi-check2-circle me-2"></i>Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const token = localStorage.getItem('userToken');
+
+    function renderSummary() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+        const el = document.getElementById('orderSummary');
+        if (!cart.length) { window.location.href = '/user/cart'; return; }
+        el.innerHTML = cart.map(i => `
+    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+      <div><div class="fw-semibold small">${i.name}</div>
+        <div class="text-muted" style="font-size:0.78rem">Qty: ${i.quantity}</div></div>
+      <div class="fw-semibold text-primary">₹${(i.price * i.quantity).toFixed(2)}</div>
+    </div>`).join('') +
+            `<div class="d-flex justify-content-between fw-bold fs-5 mt-3">
+    <span>Total</span><span class="text-primary">₹${total.toFixed(2)}</span>
+  </div>`;
+    }
+
+    async function placeOrder() {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.className = 'alert d-none';
+
+        if (!document.getElementById('termsCheck').checked) {
+            alertBox.className = 'alert alert-warning'; alertBox.textContent = 'Please accept the terms.'; return;
+        }
+        const address = document.getElementById('address').value.trim();
+        if (!address) {
+            alertBox.className = 'alert alert-warning'; alertBox.textContent = 'Please enter your shipping address.'; return;
+        }
+
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        if (!cart.length) { window.location.href = '/user/cart'; return; }
+
+        document.getElementById('placeBtn').disabled = true;
+
+        const payload = {
+            shipping_address: address,
+            items: cart.map(i => ({ product_id: i.id, quantity: i.quantity, unit_price: i.price }))
+        };
+
+        const res = await fetch('/api/v1/orders/', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.removeItem('cart');
+            alertBox.className = 'alert alert-success';
+            alertBox.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i><strong>Order #${data.id} placed successfully!</strong> Thank you for your purchase.`;
+            document.getElementById('orderSummary').innerHTML = `
+      <div class="text-center py-4">
+        <i class="bi bi-check-circle-fill text-success display-4 d-block mb-3"></i>
+        <h5 class="text-success fw-bold">Order Confirmed!</h5>
+        <p class="text-muted">Your order #${data.id} is being processed.</p>
+        <a href="/user/products" class="btn btn-primary mt-2">Continue Shopping</a>
+      </div>`;
+            document.getElementById('placeBtn').classList.add('d-none');
+        } else {
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = data.detail || 'Failed to place order. Please try again.';
+            document.getElementById('placeBtn').disabled = false;
+        }
+    }
+
+    renderSummary();
+</script>
+{% endblock %}
