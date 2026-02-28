@@ -24,24 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
 
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: test_inventory
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
-      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/test_inventory
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
-      MONGODB_DB: test_activity_logs
       SECRET_KEY: test-secret-key-for-ci
       FLASK_SECRET_KEY: test-flask-secret
       JWT_ALGORITHM: HS256

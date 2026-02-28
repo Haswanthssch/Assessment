@@ -40,7 +40,7 @@ services:
   # ─── Backend (Flask + FastAPI) ───────────────────────────────────────────────
   backend:
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile
     container_name: inventory_backend
     restart: unless-stopped
@@ -59,8 +59,8 @@ services:
       mysql:
         condition: service_healthy
     volumes:
-      - ../static:/app/static
-      - ../templates:/app/templates
+      - ./static:/app/static
+      - ./templates:/app/templates
     networks:
       - inventory_net
     healthcheck:
