@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.routes import auth, users, products, orders, inventory, admin, logs  # noqa: E402
 from src.database import engine, Base  # noqa: E402
-from src.models import User, Product, Order, OrderItem, Inventory  # noqa: E402
+from src.models import User, Product, Order, OrderItem, Inventory  # noqa: E402, F401
 from src.web_app import flask_app  # noqa: E402
 
 _log = logging.getLogger("inventory")
