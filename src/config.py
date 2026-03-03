@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # Flask
     FLASK_SECRET_KEY: str = "flask-inventory-secret-2024"
-    FLASK_DEBUG: bool = True
+    FLASK_DEBUG: bool = False
 
     # App
     APP_PORT: int = 5000
