@@ -1,19 +1,18 @@
-import sys
 import os
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
+import sys
+import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.wsgi import WSGIMiddleware
 
-from src.routes import auth, users, products, orders, inventory, admin, logs
-from src.database import engine, Base
-from src.models import User, Product, Order, OrderItem, Inventory  # noqa – registers models
-from src.web_app import flask_app
+# Ensure the root directory is in sys.path for local imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import logging
+from src.routes import auth, users, products, orders, inventory, admin, logs  # noqa: E402
+from src.database import engine, Base  # noqa: E402
+from src.models import User, Product, Order, OrderItem, Inventory  # noqa: E402
+from src.web_app import flask_app  # noqa: E402
 
 _log = logging.getLogger("inventory")
 try:
