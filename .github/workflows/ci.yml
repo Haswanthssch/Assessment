@@ -29,6 +29,14 @@ jobs:
       FLASK_SECRET_KEY: test-flask-secret
       JWT_ALGORITHM: HS256
       JWT_EXPIRE_MINUTES: "60"
+      MONGODB_URI: mongodb://localhost:27017
+      MONGODB_DB: test_logs
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
 
     steps:
       - uses: actions/checkout@v4
